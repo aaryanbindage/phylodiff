@@ -1,0 +1,11 @@
+{
+  "name": "phylodiff",
+  "version": "1.0.0",
+  "description": "Explore the NCBI tree of life with 3D models and a plain-language comparison of any two taxa.",
+  "private": true,
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "build:db": "node --max-old-space-size=3072 build-db.js . taxa.db",
+    "start": "node server.js"
+  }
+}

@@ -1,0 +1,6 @@
+taxa.db
+*.dmp
+*.tar.gz
+tools/*.png
+tools/*.log
+node_modules

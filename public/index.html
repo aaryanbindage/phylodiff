@@ -1,0 +1,186 @@
+<!doctype html><html lang="en"><head><title>Phylodiff</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: tree of life left, 3D viewer over a plain-language change summary right; separate How to use page; stacks on phones. */
+:root{--bg:#edf0ee;--panel:#f8faf9;--ink:#14201b;--mute:#5d6b64;--line:#cfd8d3;--accent:#0e7c5f;--add:#1b8a4b;--del:#c93a2c;--mod:#a86a0a;--a:#2b6cb0;--b:#b8307f;--view:#e4e9e6;--grid:#b9c4be;--addbg:#e2f3e8;--delbg:#fae6e3;
+ --display:"Bricolage Grotesque",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1311;--panel:#141c19;--ink:#e1eae5;--mute:#8d9d95;--line:#26332e;--accent:#3ecf9f;--add:#4cc77c;--del:#ff6b5b;--mod:#e8b04a;--a:#6ab0f3;--b:#f07cbc;--view:#0a0f0d;--grid:#26332e;--addbg:#12291c;--delbg:#331815;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1311;--panel:#141c19;--ink:#e1eae5;--mute:#8d9d95;--line:#26332e;--accent:#3ecf9f;--add:#4cc77c;--del:#ff6b5b;--mod:#e8b04a;--a:#6ab0f3;--b:#f07cbc;--view:#0a0f0d;--grid:#26332e;--addbg:#12291c;--delbg:#331815;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--display);font-size:14px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:0;box-sizing:border-box;display:flex;flex-direction:column;overflow-x:hidden}
+button,select,input{font:inherit;color:inherit}
+header{display:flex;align-items:baseline;gap:6px 18px;padding:12px 0 10px;flex-wrap:wrap}
+h1{font-size:22px;font-weight:800;margin:0;letter-spacing:-.02em}
+header .stat0{color:var(--mute);font-size:12.5px;font-family:var(--mono)}
+nav{display:flex;gap:4px;margin-left:auto}
+nav a{padding:5px 12px;border-radius:5px;color:var(--mute);text-decoration:none;border:1px solid transparent}
+nav a[aria-current="page"]{background:var(--ink);color:var(--panel)}
+nav a:hover{border-color:var(--accent)}
+#explore{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,.8fr) 1.4fr;gap:12px;padding-bottom:12px}
+#explore[hidden],#how[hidden]{display:none}
+.col{min-height:0;min-width:0;display:flex;flex-direction:column;gap:12px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;min-height:0;min-width:0}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--mute)}
+.bar .sp{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:4px 10px;cursor:pointer;color:var(--mute)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.ib{border:1px solid var(--line);background:transparent;border-radius:5px;padding:3px 9px;cursor:pointer}
+.ib:hover,.seg button:hover{border-color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.treebox{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.search{position:relative;flex:1;min-width:140px}
+#q{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:5px 8px}
+#qres{position:absolute;z-index:5;left:0;right:0;top:100%;margin:2px 0 0;padding:4px;list-style:none;background:var(--panel);border:1px solid var(--line);border-radius:5px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+#qres li{display:flex;gap:8px;align-items:baseline;padding:5px 8px;border-radius:4px;cursor:pointer;color:var(--ink)}
+#qres li:hover{background:var(--bg)}
+.rn{font-weight:600}.rs{font-style:italic;color:var(--mute);font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rr{font-family:var(--mono);font-size:11px;color:var(--mute)}
+.treewrap{flex:1;min-height:0;position:relative}
+#tree{position:absolute;inset:0;touch-action:none;cursor:grab}
+.hint{padding:6px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--mute);line-height:1.45}
+.viewbox{height:50%;display:flex;flex-direction:column;overflow:hidden}
+.chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);background:transparent;border-radius:5px;padding:3px 9px;cursor:pointer;max-width:100%}
+.chip b{font-family:var(--mono);font-size:11px;color:#fff;border-radius:3px;padding:0 5px}
+#chipA b{background:var(--a)}#chipB b{background:var(--b)}
+.chip[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.chip .cn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;color:var(--ink)}
+#viewer{flex:1;min-height:0;position:relative;background:var(--view)}
+#v3d{position:absolute;left:0;top:0;cursor:grab;touch-action:none}
+.lab{position:absolute;top:8px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:3px;background:var(--panel);border:1px solid var(--line);pointer-events:none;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#labA{left:8px;border-left:4px solid var(--a)}#labB{right:8px;border-left:4px solid var(--b)}#labO{left:8px;font-weight:400}
+#div{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);pointer-events:none}
+.ca{color:var(--a)}.cb{color:var(--b)}.add{color:var(--add)}.del{color:var(--del)}.mod{color:var(--mod)}
+.note{padding:6px 10px;font-size:11.5px;color:var(--mute);line-height:1.45;border-top:1px solid var(--line)}
+.key{display:flex;gap:12px;flex-wrap:wrap;padding:0 10px 6px;font-size:11.5px}
+.key span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;background:currentColor;vertical-align:-1px}
+.sumbox{flex:1;overflow:auto;padding:14px 16px 18px}
+.sh h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.015em;line-height:1.2;overflow-wrap:anywhere}
+.arrow{color:var(--mute);font-weight:400;margin:0 4px}
+.verdict{margin:8px 0 10px;font-size:14.5px;line-height:1.55;max-width:70ch}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips span{font-size:12px;padding:2px 9px;border:1px solid var(--line);border-radius:99px;color:var(--mute)}
+.meta{margin:10px 0 0;color:var(--mute);font-size:12.5px}
+.sec{margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}
+.sec h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);font-weight:600}
+.sub{margin:12px 0 4px;font-size:12.5px;color:var(--mute)}
+.oall{display:flex;flex-direction:column;gap:2px}
+.orow,.prow{display:grid;grid-template-columns:150px minmax(0,1fr) 120px 56px;gap:10px;align-items:center;padding:4px 6px;border-radius:4px;font-size:13px;font-variant-numeric:tabular-nums}
+.orow{grid-template-columns:110px minmax(0,1fr) 120px 56px}
+.prow:hover,.mrow:hover,.crow:hover{background:var(--bg)}
+.ok,.pn{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.ov,.pd{font-family:var(--mono);font-size:12px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.or{font-family:var(--mono);font-weight:600;text-align:right}.or.up{color:var(--b)}.or.dn{color:var(--a)}
+.dbar{position:relative;height:8px;background:var(--bg);border-radius:4px;border:1px solid var(--line);box-sizing:border-box}
+.dbar::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--mute)}
+.dfill{position:absolute;top:0;bottom:0}.dfill.r{left:50%;background:var(--b);border-radius:0 3px 3px 0}.dfill.l{right:50%;background:var(--a);border-radius:3px 0 0 3px}
+.legend2{display:flex;gap:14px;font-size:11.5px;color:var(--mute);margin-top:6px;padding-left:6px}
+.none{color:var(--mute);font-size:13px;padding:2px 6px}
+.mrow,.crow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:5px 6px;border-radius:4px}
+.pill{font-size:12px;padding:1px 9px;border-radius:99px;border:1px solid}
+.pill.pa{border-color:var(--a);color:var(--a)}.pill.pb{border-color:var(--b);color:var(--b)}
+.mp{color:var(--mute);font-size:12.5px}
+.sw{display:inline-block;width:16px;height:16px;border-radius:3px;border:1px solid var(--line);vertical-align:-3px}
+.avg{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:2px 6px}
+.avg>div{display:flex;gap:6px;align-items:center}.avg .sw{width:26px;height:26px}
+.crow{display:grid;grid-template-columns:150px 60px minmax(0,1fr);gap:10px}.cs{display:flex;gap:4px;align-items:center}
+.prt{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:3px 6px}.prt>div{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;padding:1px 8px;border-radius:4px;border:1px solid}.tadd{border-color:var(--add);background:var(--addbg)}.tdel{border-color:var(--del);background:var(--delbg)}
+#how{flex:1;min-height:0;overflow:auto;padding-bottom:40px}
+#how:focus-visible{outline:none}
+.how{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:26px;padding-top:6px}
+.how h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px}
+.how h3{font-size:16px;margin:0 0 8px}
+.how p,.how li{line-height:1.6;max-width:68ch}
+.how ol,.how ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.how table{border-collapse:collapse;width:100%;font-size:13.5px}
+.how th,.how td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.how th{color:var(--mute);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.tbl{overflow-x:auto}
+.how .box{padding:14px 16px}
+.pairs{display:flex;gap:8px;flex-wrap:wrap}
+.pair{padding:5px 12px}
+.leg{display:flex;flex-direction:column;gap:6px}
+.leg div{display:flex;gap:10px;align-items:center}
+.leg i{display:inline-block;width:26px;height:12px;border-radius:3px;flex:none}
+@media (max-width:860px){
+ html,body{height:auto}body{min-height:100%;overflow-y:auto}
+ #explore{display:flex;flex-direction:column;flex:none}
+ .col{flex:none}
+ .treebox{flex:none;height:420px}.viewbox{height:440px;flex:none}.sumbox{flex:none;overflow:visible}
+ .lab{max-width:46%}.chip .cn{max-width:90px}
+ .orow,.prow{grid-template-columns:90px minmax(0,1fr) 46px}.orow .ov,.prow .pd{grid-column:1/-1;order:5}
+ .crow{grid-template-columns:110px 60px}.crow .pd{grid-column:1/-1}
+ nav{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head><body><header><h1>Phylodiff</h1><span class="stat0" id="stat"></span>
+ <nav aria-label="Pages"><a href="#explore" id="navExp" aria-current="page">Explorer</a><a href="#how" id="navHow" aria-current="false">How to use</a></nav></header>
+<main id="explore">
+ <section class="col">
+  <div class="box treebox">
+   <div class="bar"><div class="search"><input id="q" type="search" placeholder="Search taxa, e.g. bee, oak" autocomplete="off" aria-label="Search taxa"><ul id="qres" role="listbox" hidden></ul></div>
+    <button class="ib" id="zout" aria-label="Zoom out">−</button><button class="ib" id="zin" aria-label="Zoom in">+</button><button class="ib" id="fit">Re-centre</button><label title="Open small groups automatically when you zoom in"><input type="checkbox" id="auto" checked> Auto-expand</label></div>
+   <div class="treewrap"><canvas id="tree" aria-label="Tree of life. Use the search box to pick taxa."></canvas></div>
+   <div class="hint"><span id="status"></span> Square = collapsed group, click it to expand. Click a name to put it in the highlighted slot (A or B). Scroll to zoom, drag to pan.</div>
+  </div>
+ </section>
+ <section class="col">
+  <div class="box viewbox">
+   <div class="bar">
+    <button class="chip" id="chipA" aria-pressed="true"><b>A</b><span class="cn"></span></button><button class="ib" id="swap" aria-label="Swap A and B">⇄</button><button class="chip" id="chipB" aria-pressed="false"><b>B</b><span class="cn"></span></button>
+    <span class="sp"></span>
+    <div class="seg" id="modeSeg"><button data-v="split" aria-pressed="true">Split</button><button data-v="overlay" aria-pressed="false">Overlay</button></div>
+    <div class="seg" id="scaleSeg"><button data-v="true" aria-pressed="true">True size</button><button data-v="prop" aria-pressed="false">Same size</button></div>
+    <label><input type="checkbox" id="tint" checked> Tint</label>
+    <label><input type="checkbox" id="spin" checked> Spin</label>
+   </div>
+   <div id="viewer"><canvas id="v3d"></canvas><div id="div"></div><div class="lab" id="labA"></div><div class="lab" id="labB"></div><div class="lab" id="labO" hidden></div></div>
+   <div class="key"><span class="mod">changed</span><span class="del">only in A</span><span class="add">only in B</span><span id="gridnote" style="color:var(--mute)"></span></div>
+   <div class="note" id="note"></div>
+  </div>
+  <div class="box sumbox" id="summary"></div>
+ </section>
+</main>
+<div id="how" hidden><article class="how">
+ <div><h2>How to use Phylodiff</h2><p>Phylodiff is a tree of life where every group has a 3D model. Pick any two and it tells you, in plain language, how they differ in size, surface material and colour. The tree is the NCBI taxonomy, the same one LifeMap draws.</p></div>
+ <div class="box"><h3>Try a comparison</h3><div class="pairs" id="pairs"></div></div>
+ <div><h3>In three steps</h3><ol>
+  <li><b>Find two things.</b> Type a name into the search box above the tree (common or Latin names both work), or open groups by clicking the squares. A name you click goes into the highlighted slot, A or B, and then the highlight moves to the other slot.</li>
+  <li><b>Look at them.</b> The viewer shows A on the left and B on the right (Split). Drag to rotate, scroll to zoom. Switch to Overlay to put B on top of A.</li>
+  <li><b>Read the summary.</b> The panel under the viewer lists what changed. Hover any row to light up that part on the models.</li>
+ </ol></div>
+ <div><h3>Reading the summary</h3><ul>
+  <li><b>Size.</b> Height, length and mass first, then the parts that grew or shrank the most. Bars pointing left mean A is larger, bars pointing right mean B is larger.</li>
+  <li><b>Surface material.</b> Parts whose covering differs, such as skin to fur, scales to feathers or shell to gel.</li>
+  <li><b>Colour.</b> The average colour of each body, then the parts whose colour changed most.</li>
+  <li><b>Parts.</b> Parts that exist only on one side, such as a trunk, a mane or wings.</li>
+ </ul></div>
+ <div class="box"><h3>Colours in the 3D view</h3><div class="leg">
+  <div><i style="background:var(--mod)"></i>Amber: the part exists in both but differs in size, surface, colour or position.</div>
+  <div><i style="background:var(--del)"></i>Red: only in A. In Overlay, A is drawn as a red wireframe.</div>
+  <div><i style="background:var(--add)"></i>Green: only in B.</div>
+  <div><i style="background:var(--mute);opacity:.5"></i>Grey (Overlay only): parts that match.</div>
+  <div>Turn off “Tint” to see natural colours in side-by-side view.</div></div></div>
+ <div><h3>Controls</h3><div class="tbl"><table>
+  <tr><th>Where</th><th>Action</th><th>Result</th></tr>
+  <tr><td>Tree</td><td>Click a square</td><td>Expand or collapse that group</td></tr>
+  <tr><td>Tree</td><td>Click a name</td><td>Put it in the highlighted slot</td></tr>
+  <tr><td>Tree</td><td>Scroll, drag, + / −</td><td>Zoom and pan. “Re-centre” returns to A and B.</td></tr>
+  <tr><td>Viewer</td><td>Drag, scroll</td><td>Rotate and zoom both models together</td></tr>
+  <tr><td>Viewer</td><td>True size / Same size</td><td>Real dimensions, or every model scaled to the same size so only shape is compared</td></tr>
+  <tr><td>Viewer</td><td>A / B buttons, ⇄</td><td>Choose which slot the next click fills, or swap A and B</td></tr>
+ </table></div></div>
+ <div><h3>About the data and the models</h3><ul>
+  <li><b>Tree.</b> <span id="stat2"></span> groups from the NCBI taxonomy, the same one LifeMap draws: every named group and species, down through genera to species and subspecies. Groups load from the server when you open them, so the whole tree is reachable. Placeholder entries such as “Genus sp.”, environmental samples and strain-level records are left out.</li>
+  <li><b>Zooming in.</b> With “Auto-expand” on, small groups on screen open by themselves once you zoom in, so you see every member. Larger groups show a square: click it to open, and click “more” at the end of a long list to load the rest.</li>
+  <li><b>18 hand-built models</b> (elephant, mammoth, wolf, dog, human, chimpanzee, lion, cat, bear, horse, zebra, giraffe, okapi, great white shark, Nile crocodile, T. rex, ostrich, bald eagle) use measured proportions and masses.</li>
+  <li><b>Everything else is generated</b> from the body plan of its group (mammal, bird, insect, tree, mushroom, bacterium, virus and about 30 more). Shapes are plausible but sizes and colours are illustrative, picked at random within a realistic range for the group. Do not use them as measurements.</li>
+  <li><b>No dates.</b> NCBI does not give divergence times, so the tree shows branching order only.</li>
+ </ul></div>
+</article></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/hand.js"></script><script src="/taxa.js"></script><script src="/models.js"></script><script src="/ui.js"></script>
+</body></html>

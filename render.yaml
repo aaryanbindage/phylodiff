@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: phylodiff
+    runtime: node
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: 22.20.0
+    buildCommand: >-
+      curl -sSL -o taxdump.tar.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz &&
+      tar -xzf taxdump.tar.gz nodes.dmp names.dmp &&
+      node --max-old-space-size=3072 build-db.js . taxa.db &&
+      rm -f taxdump.tar.gz nodes.dmp names.dmp
+    startCommand: node server.js
+    healthCheckPath: /api/stats
