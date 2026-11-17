@@ -2,7 +2,7 @@
 const ROOT={id:1,name:'Life',common:'',rank:'root',parent:null,kids:[],depth:0,count:0,loaded:false,open:true,kidsFetched:0,total:0};
 const BYID=new Map([[1,ROOT]]);
 const HAND={'Carcharodon carcharias':'shark','Crocodylus niloticus':'croc','Tyrannosaurus rex':'trex','Struthio camelus':'ostrich','Haliaeetus leucocephalus':'eagle','Loxodonta africana':'elephant','Mammuthus primigenius':'mammoth','Homo sapiens':'human','Pan troglodytes':'chimp','Canis lupus':'wolf','Canis lupus familiaris':'dog','Ursus arctos':'bear','Panthera leo':'lion','Felis catus':'cat','Equus caballus':'horse','Equus quagga':'zebra','Giraffa camelopardalis':'giraffe','Okapia johnstoni':'okapi'};
-const SPRANK=new Set(['species','subspecies','varietas']);
+const SPRANK=new Set(['species','subspecies','varietas','forma','forma specialis','strain','isolate','serotype','serogroup','pathogroup','biotype','morph','genotype','subvariety']);
 const isSp=n=>SPRANK.has(n.rank);
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
 function label(n){if(n.hand)return SP[n.hand].name;return isSp(n)&&n.common?cap(n.common):n.name;}

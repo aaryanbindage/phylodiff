@@ -1,4 +1,5 @@
-// Builds taxa.db (SQLite) from the NCBI taxonomy dump. Usage: node build-db.js <dir with nodes.dmp and names.dmp> <out.db>
+// Builds taxa.db with every node of the NCBI taxonomy.
+// (previously filtered; now unfiltered) (SQLite) from the NCBI taxonomy dump. Usage: node build-db.js <dir with nodes.dmp and names.dmp> <out.db>
 const fs = require('fs'), readline = require('readline'), { DatabaseSync } = require('node:sqlite');
 const dir = process.argv[2] || '.', out = process.argv[3] || 'taxa.db';
 const DROP = new Set(['strain', 'isolate', 'serotype', 'serogroup', 'forma specialis', 'forma', 'pathogroup', 'biotype', 'morph', 'genotype', 'subvariety']);
@@ -27,7 +28,7 @@ async function lines(f, cb) { const rl = readline.createInterface({ input: fs.cr
       const y = stack.pop(), p = parent[y], r = RANKS[rankIx[y]], nm = sci.get(y) || '';
       below[y] = (spIx.has(rankIx[y]) || below[p]) ? 1 : 0;
       const bp = spIx.has(rankIx[p]) || below[p];
-      const keep = pk && nm && !DROP.has(r) && !BAD.test(nm) && !(rankIx[y] === noRank && bp);
+      const keep = pk && nm; // full NCBI taxonomy: every node with a name is kept
       state[y] = keep ? 1 : 2; pk = keep;
     }
   }

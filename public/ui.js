@@ -62,7 +62,7 @@ cv3.addEventListener('wheel',e=>{e.preventDefault();orb.zoom=Math.max(.25,Math.m
 // ---------- summary ----------
 const sw=c=>`<i class="sw" style="background:${c}"></i>`;
 const pillMat=(m,cls)=>`<span class="pill ${cls}">${MATS[m]?MATS[m].n:m}</span>`;
-function ratioWords(r,up,down,same){if(Math.abs(r-1)<.05)return same;const x=r>1?r:1/r,w=r>1?up:down;return x>=2?(x>=100?Math.round(x).toLocaleString():x.toFixed(1))+'× '+w:Math.round(Math.abs(r-1)*100)+'% '+w;}
+function ratioWords(r,up,down,same){if(Math.abs(r-1)<.05)return same;const x=r>1?r:1/r,w=r>1?up:down;return x>=2?big(x)+'× '+w:Math.round(Math.abs(r-1)*100)+'% '+w;}
 function verdict(A,B,s){const a=A.name,b=B.name,bits=[];
   if(s.over.mass!=null)bits.push(ratioWords(s.over.mass,'heavier','lighter','about the same mass'));
   bits.push(ratioWords(s.over.h,'taller','lower in height','about the same height'));bits.push(ratioWords(s.over.len,'longer','shorter in length','about the same length'));
