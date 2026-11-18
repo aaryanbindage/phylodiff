@@ -6,10 +6,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22.20.0
+    # taxa.db (full NCBI taxonomy) is built once locally with build-db.js and attached to a
+    # GitHub release; building it on Render's free tier would run out of memory.
     buildCommand: >-
-      curl -sSL -o taxdump.tar.gz https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz &&
-      tar -xzf taxdump.tar.gz nodes.dmp names.dmp &&
-      node --max-old-space-size=3072 build-db.js . taxa.db &&
-      rm -f taxdump.tar.gz nodes.dmp names.dmp
+      curl -fsSL -o taxa.db.gz https://github.com/aaryanbindage/phylodiff/releases/download/data-1/taxa.db.gz &&
+      gunzip -f taxa.db.gz
     startCommand: node server.js
     healthCheckPath: /api/stats
